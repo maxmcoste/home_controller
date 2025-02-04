@@ -1,0 +1,75 @@
+.room-card {
+    border: 1px solid #dee2e6;
+    border-radius: 0.25rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    background-color: #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.room-card:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.room-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.room-title {
+    font-size: 1.1rem;
+    font-weight: 500;
+    margin: 0;
+}
+
+.room-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.room-info {
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+.room-type-badge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    text-transform: capitalize;
+}
+
+.room-type-living {
+    background-color: #e3f2fd;
+    color: #0d47a1;
+}
+
+.room-type-bedroom {
+    background-color: #f3e5f5;
+    color: #4a148c;
+}
+
+.room-type-bathroom {
+    background-color: #e8f5e9;
+    color: #1b5e20;
+}
+
+#statistics ul {
+    list-style: none;
+    padding-left: 0;
+}
+
+#statistics li {
+    margin-bottom: 0.5rem;
+    display: flex;
+    justify-content: space-between;
+}
+
+.navbar {
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}

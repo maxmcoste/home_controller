@@ -1,0 +1,38 @@
+# Temperature check interval in seconds
+temperature_check_interval_seconds: 5
+
+# Temperature constraints
+min_allowed_temperature: 15.0
+max_allowed_temperature: 30.0
+
+# Default temperatures by room type
+default_temperatures:
+  living_rooms: 21.0
+  bathrooms: 22.0
+  bedrooms: 20.0
+
+# Sensor and heater URL patterns
+device_urls:
+  sensor_pattern: "http://sensor-{room_id}.local/temperature"
+  heater_pattern: "http://heater-{room_id}.local/control"
+
+# Room specific overrides (optional)
+room_overrides:
+  bedroom_main:
+    target_temperature: 19.0  # override default bedroom temperature
+  bath_f1_big:
+    target_temperature: 23.0  # override default bathroom temperature
+
+# API configuration
+api:
+  host: "0.0.0.0"
+  port: 8000
+  control_pin: "130376"  # PIN for control APIs
+
+# Logging configuration
+logging:
+  file_path: "logs/home_temperature_control.log"
+  max_size_kb: 500  # Maximum size of each log file in kilobytes
+  backup_count: 4   # Number of backup files to keep
+  console_level: "INFO"
+  file_level: "DEBUG"
