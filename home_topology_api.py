@@ -31,9 +31,7 @@ controller: Optional[TemperatureController] = None
 security: Optional[SecurityUtils] = None
 
 class TemperatureReading(BaseModel):
-    room_name: str
     temperature: float
-    timestamp: str
 
 class HeaterStatus(BaseModel):
     room_name: str
@@ -278,6 +276,17 @@ def restart_application(request: ControlRequest):
     
     logger.info("Received restart signal. Restarting...")
     os.execv(sys.executable, ['python'] + sys.argv)
+
+@app.post("/room/{room_id}/temperature")
+def update_room_temperature(room_id: str, reading: TemperatureReading):
+    """Receive temperature reading from test simulator."""
+    if not controller or room_id not in controller.rooms:
+        raise HTTPException(status_code=404, detail=f"Room {room_id} not found")
+    
+    room = controller.rooms[room_id]
+    room.current_temp = reading.temperature
+    logger.info(f"Received temperature update for {room.info.name}: {reading.temperature}°C")
+    return {"status": "ok"}
 
 @app.get("/room/{room_id}")
 def get_room(room_id: str):

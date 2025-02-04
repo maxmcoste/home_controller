@@ -13,8 +13,8 @@ default_temperatures:
 
 # Sensor and heater URL patterns
 device_urls:
-  sensor_pattern: "http://sensor-{room_id}.local/temperature"
-  heater_pattern: "http://heater-{room_id}.local/control"
+  sensor_pattern: "http://localhost:8000/room/{room_id}/temperature"
+  heater_pattern: "http://localhost:8000/room/{room_id}/heater"
 
 # Room specific overrides (optional)
 room_overrides:
@@ -28,6 +28,12 @@ api:
   host: "0.0.0.0"
   port: 8000
   control_pin: "130376"  # PIN for control APIs
+
+# Simulator configuration
+simulator:
+  update_interval_seconds: 5  # How often to update temperatures
+  temperature_variation: 2.0  # Maximum variation from target temperature
+  base_port: 8100  # Starting port for sensor endpoints
 
 # Logging configuration
 logging:

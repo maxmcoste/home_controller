@@ -16,13 +16,14 @@ class RoomInfo:
     room_type: str
 
 class Room:
-    def __init__(self, room_info: RoomInfo, sensor_url: str, heater_url: str, target_temp: float):
+    def __init__(self, room_info: RoomInfo, sensor_url: str, heater_url: str, target_temp: float, controller=None):
         self.info = room_info
         self.sensor_url = sensor_url
         self.heater_url = heater_url
         self.target_temp = target_temp
         self.current_temp: Optional[float] = None
         self.heater_status: bool = False
+        self.controller = controller
 
 def get_room_info(room_data: dict, room_type: str) -> RoomInfo:
     """Create RoomInfo from room data."""
@@ -46,13 +47,10 @@ def get_temperature(room: Room) -> Optional[float]:
         return None
 
 def control_heater(room: Room, status: bool) -> bool:
-    """Control room heater."""
+    """Mock heater control (just log the action)."""
     try:
-        response = requests.post(room.heater_url, json={'status': status})
-        if response.status_code == 200:
-            return True
-        logger.error(f"Error controlling heater for {room.info.name}: {response.status_code}")
-        return False
+        logger.info(f"Heater control for {room.info.name}: {'ON' if status else 'OFF'}")
+        return True
     except Exception as e:
         logger.error(f"Error controlling heater for {room.info.name}: {str(e)}")
         return False
@@ -66,6 +64,7 @@ class TemperatureController:
         self.default_temps = config.get('default_temperatures', {})
         self.device_urls = config.get('device_urls', {})
         self.scheduler_thread: Optional[Thread] = None
+        self.simulator_base_port = config.get('simulator', {}).get('base_port', 8100)
 
     def initialize_rooms(self, topology: dict) -> None:
         """Initialize rooms from topology."""
@@ -82,7 +81,7 @@ class TemperatureController:
                 sensor_url = self.device_urls['sensor_pattern'].format(room_id=room_id)
                 heater_url = self.device_urls['heater_pattern'].format(room_id=room_id)
                 
-                self.rooms[room_id] = Room(room_info, sensor_url, heater_url, target_temp)
+                self.rooms[room_id] = Room(room_info, sensor_url, heater_url, target_temp, controller=self)
                 logger.info(f"Initialized {room_info.name} (ID: {room_id}) with target temperature {target_temp}°C")
 
     def check_and_control_temperature(self) -> None:
