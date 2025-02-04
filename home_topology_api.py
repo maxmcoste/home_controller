@@ -280,13 +280,22 @@ def restart_application(request: ControlRequest):
 @app.post("/room/{room_id}/temperature")
 def update_room_temperature(room_id: str, reading: TemperatureReading):
     """Receive temperature reading from test simulator."""
-    if not controller or room_id not in controller.rooms:
+    logger.debug(f"Received temperature update request for room {room_id}: {reading.temperature}°C")
+    
+    if not controller:
+        logger.error("Temperature controller not initialized")
+        raise HTTPException(status_code=500, detail="Temperature controller not initialized")
+    
+    if room_id not in controller.rooms:
+        logger.error(f"Room {room_id} not found in controller rooms: {list(controller.rooms.keys())}")
         raise HTTPException(status_code=404, detail=f"Room {room_id} not found")
     
     room = controller.rooms[room_id]
     room.current_temp = reading.temperature
-    logger.info(f"Received temperature update for {room.info.name}: {reading.temperature}°C")
-    return {"status": "ok"}
+    logger.info(f"Updated temperature for {room.info.name} (ID: {room_id}): {reading.temperature}°C")
+    
+    return {"status": "success", "room_id": room_id, "temperature": room.current_temp}
+
 
 @app.get("/room/{room_id}")
 def get_room(room_id: str):

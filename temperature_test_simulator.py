@@ -10,11 +10,22 @@ import threading
 from pathlib import Path
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
-)
 logger = logging.getLogger('temperature_test_simulator')
+logger.setLevel(logging.DEBUG)
+
+# Create file handler
+fh = logging.FileHandler('logs/temperature_simulator.log')
+fh.setLevel(logging.DEBUG)
+
+# Create formatter
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - [%(name)s] - %(message)s')
+fh.setFormatter(formatter)
+
+# Add handler to logger
+logger.addHandler(fh)
+
+# Prevent logging to console
+logger.propagate = False
 
 @dataclass
 class RoomState:
@@ -45,10 +56,13 @@ class TemperatureTestSimulator:
     
     def initialize_rooms(self):
         """Initialize room states with random temperatures around target."""
-        for room_type, rooms in self.topology['rooms'].items():
+        logger.info("Initializing rooms from topology...")
+        for room_type, rooms_data in self.topology['rooms'].items():
             default_temp = self.config['default_temperatures'].get(room_type, 20.0)
+            logger.debug(f"Room type {room_type}: default temperature {default_temp}°C")
             
-            for room_id, room_data in rooms.items():
+            for room_data in rooms_data:
+                room_id = room_data['id']
                 target_temp = self.config.get('room_overrides', {}).get(room_id, {}).get(
                     'target_temperature', default_temp)
                 
@@ -63,7 +77,7 @@ class TemperatureTestSimulator:
                     trend=random.uniform(-1, 1),  # Random initial trend
                     last_update=time.time()
                 )
-                logger.info(f"Initialized {room_data['name']}: Target={target_temp}°C, Current={current_temp:.1f}°C")
+                logger.info(f"Initialized room: name='{room_data['name']}', id='{room_id}', target={target_temp}°C, current={current_temp:.1f}°C")
 
     def update_room_temperature(self, room: RoomState):
         """Update room temperature based on current trend and random factors."""
@@ -95,14 +109,18 @@ class TemperatureTestSimulator:
     def send_temperature(self, room: RoomState):
         """Send temperature reading to the control system."""
         try:
-            url = f"{self.api_url}/room/{room.room_id}/temperature"
+            url = f"http://localhost:8000/room/{room.room_id}/temperature"
+            logger.debug(f"Sending temperature update: room_id='{room.room_id}', url='{url}', temperature={room.current_temp}°C")
+            
             response = requests.post(url, json={"temperature": room.current_temp})
             if response.status_code == 200:
-                logger.info(f"Room {room.name}: Sent temperature {room.current_temp}°C")
+                logger.info(f"Room {room.name} (ID: {room.room_id}): Sent temperature {room.current_temp}°C")
             else:
-                logger.error(f"Failed to send temperature for {room.name}: {response.status_code}")
+                logger.error(f"Failed to send temperature for {room.name} (ID: {room.room_id}): {response.status_code}")
+                if response.status_code == 404:
+                    logger.error(f"Room ID '{room.room_id}' not found in controller")
         except Exception as e:
-            logger.error(f"Error sending temperature for {room.name}: {str(e)}")
+            logger.error(f"Error sending temperature for {room.name} (ID: {room.room_id}): {str(e)}")
 
     def simulate_temperatures(self):
         """Main simulation loop."""

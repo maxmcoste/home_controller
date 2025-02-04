@@ -35,16 +35,8 @@ def get_room_info(room_data: dict, room_type: str) -> RoomInfo:
     )
 
 def get_temperature(room: Room) -> Optional[float]:
-    """Fetch temperature from room sensor."""
-    try:
-        response = requests.get(room.sensor_url)
-        if response.status_code == 200:
-            return float(response.text)
-        logger.error(f"Error getting temperature for {room.info.name}: {response.status_code}")
-        return None
-    except Exception as e:
-        logger.error(f"Error getting temperature for {room.info.name}: {str(e)}")
-        return None
+    """Get the current temperature for a room."""
+    return room.current_temp
 
 def control_heater(room: Room, status: bool) -> bool:
     """Mock heater control (just log the action)."""
@@ -62,7 +54,10 @@ class TemperatureController:
         self.max_temp = config.get('max_allowed_temperature', 30.0)
         self.check_interval_seconds = config.get('temperature_check_interval_seconds', 300)
         self.default_temps = config.get('default_temperatures', {})
-        self.device_urls = config.get('device_urls', {})
+        self.device_urls = {
+            'sensor_pattern': config.get('device_urls', {}).get('sensor_pattern', 'http://localhost:8000/room/{room_id}/temperature'),
+            'heater_pattern': config.get('device_urls', {}).get('heater_pattern', 'http://localhost:8000/room/{room_id}/heater')
+        }
         self.scheduler_thread: Optional[Thread] = None
         self.simulator_base_port = config.get('simulator', {}).get('base_port', 8100)
 
@@ -91,8 +86,8 @@ class TemperatureController:
             try:
                 current_temp = get_temperature(room)
                 if current_temp is not None:
-                    room.current_temp = current_temp
                     should_heat = current_temp < room.target_temp
+                    logger.info(f"Room {room.info.name}: Current={current_temp}°C, Target={room.target_temp}°C, Heater={'ON' if should_heat else 'OFF'}")
                     
                     if control_heater(room, should_heat):
                         room.heater_status = should_heat
