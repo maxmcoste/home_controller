@@ -2,7 +2,7 @@ rooms:
   bathrooms:
   - floor: 1
     id: bath_f1_big
-    name: floor1 big bath
+    name: Piano 1 bagno grande
   - floor: 1
     id: bath_f1_small
     name: floor1 small bath
