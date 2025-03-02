@@ -10,13 +10,40 @@ import os
 from security_utils import SecurityUtils
 from config_loader import load_config, setup_logging, save_topology
 from temperature_control import TemperatureController
+from contextlib import asynccontextmanager
 
 # Initialize logging with default configuration until we load the config file
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('home_temperature_control')
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    global security, controller
+    try:
+        logger.info("=== Home Temperature Control System Starting ===")
+        # Load configuration and setup logging
+        config, topology = load_config()
+        setup_logging(config)
+        # Initialize security
+        control_pin = config.get('api', {}).get('control_pin')
+        if not control_pin:
+            logger.warning("No control PIN configured. Control APIs will be disabled.")
+        security = SecurityUtils(control_pin)
+        # Initialize temperature controller
+        controller = TemperatureController(config)
+        controller.initialize_rooms(topology)
+        logger.info(f"Initialized {len(controller.rooms)} rooms")
+        # Start temperature control scheduler
+        controller.start_scheduler()
+        logger.info("System initialization completed successfully")
+        
+        yield
+    finally:
+        logger.info("=== Home Temperature Control System Shutting Down ===")
+        # ...optional cleanup code...
+
 # Initialize FastAPI app
-app = FastAPI(title="Home Temperature Control System")
+app = FastAPI(title="Home Temperature Control System", lifespan=lifespan)
 
 # Mount static files directory
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -45,39 +72,6 @@ class RoomCreate(BaseModel):
 class RoomUpdate(BaseModel):
     name: Optional[str] = None
     floor: Optional[int] = None
-
-@app.on_event("startup")
-async def startup_event():
-    global security
-    """Initialize the application."""
-    global controller
-    try:
-        logger.info("=== Home Temperature Control System Starting ===")
-        
-        # Load configuration
-        config, topology = load_config()
-        
-        # Setup logging with loaded configuration
-        setup_logging(config)
-        
-        # Initialize security
-        control_pin = config.get('api', {}).get('control_pin')
-        if not control_pin:
-            logger.warning("No control PIN configured. Control APIs will be disabled.")
-        security = SecurityUtils(control_pin)
-        
-        # Initialize temperature controller
-        controller = TemperatureController(config)
-        controller.initialize_rooms(topology)
-        logger.info(f"Initialized {len(controller.rooms)} rooms")
-        
-        # Start temperature control scheduler
-        controller.start_scheduler()
-        
-        logger.info("System initialization completed successfully")
-    except Exception as e:
-        logger.error(f"Error during startup: {str(e)}")
-        raise
 
 @app.get("/topology")
 def get_topology():
