@@ -221,9 +221,13 @@ async def startup_event():
         logger.info(f"Initialized {len(rooms)} rooms")
         
         # Schedule temperature checks based on configuration
-        interval = config.get('temperature_check_interval', 5)
-        logger.info(f"Scheduling temperature checks every {interval} minutes")
-        schedule.every(interval).minutes.do(check_and_control_temperature)
+        # Get interval in seconds and convert to minutes for scheduling
+        interval_seconds = config.get('temperature_check_interval_seconds', 300)
+        interval_minutes = max(1, interval_seconds // 60)  # Ensure at least 1 minute
+        
+        logger.info(f"Scheduling temperature checks every {interval_minutes} minute(s) " +
+                   f"({interval_seconds} seconds)")
+        schedule.every(interval_minutes).minutes.do(check_and_control_temperature)
         
         # Start the scheduler in a separate thread
         Thread(target=run_scheduler, daemon=True).start()
