@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  wsurf-app:
+    build: .
+    container_name: wsurf-application
+    # Use a named volume instead of a bind mount
+    volumes:
+      - wsurf_logs:/app/logs
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    networks:
+      - wsurf-network
+
+networks:
+  wsurf-network:
+    driver: bridge
+
+volumes:
+  wsurf_logs:
+    # This creates a named volume managed by Docker

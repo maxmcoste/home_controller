@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.env
+.venv
+env/
+venv/
+ENV/
+.git/
+.gitignore
+# Don't exclude the logs directory itself
+# logs/
+*.log
+.DS_Store
