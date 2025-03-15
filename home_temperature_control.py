@@ -1,7 +1,10 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Response
+from fastapi.responses import RedirectResponse
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import requests
 import logging
+from logging import handlers
 from typing import Dict, Optional, List
 from pathlib import Path
 import schedule
@@ -10,6 +13,7 @@ from threading import Thread
 import yaml
 from pathlib import Path
 from dataclasses import dataclass
+import random
 
 def setup_logging(config: dict) -> logging.Logger:
     """Setup logging configuration for both file and console output."""
@@ -54,10 +58,50 @@ def setup_logging(config: dict) -> logging.Logger:
     return logger
 
 # Initialize logging with default configuration until we load the config file
-logging.basicConfig(level=logging.INFO)
+# Remove duplicate logging configuration
 logger = logging.getLogger('home_temperature_control')
+logger.setLevel(logging.INFO)
+console_handler = logging.StreamHandler()
+console_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', '%H:%M:%S'))
+logger.addHandler(console_handler)
+
+# Startup message
+logger.info("Starting Home Temperature Control System initialization...")
 
 app = FastAPI(title="Home Temperature Control System")
+
+# Add CORS middleware to allow cross-origin requests from the web UI
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # In production, replace with specific origins
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+@app.get("/", include_in_schema=True)
+async def root():
+    """Root endpoint - provides basic system information and links."""
+    return {
+        "name": "Home Temperature Control System",
+        "version": "1.0.0",
+        "description": "API for monitoring and controlling home temperature",
+        "endpoints": {
+            "documentation": "/docs",
+            "all_rooms": "/rooms",
+            "room_by_id": "/room/{room_id}",
+            "rooms_by_floor": "/rooms/by-floor/{floor}",
+            "rooms_by_type": "/rooms/by-type/{room_type}",
+            "house_topology": "/topology"
+        },
+        "status": "running"
+    }
+
+# Alternative approach with redirect to docs
+@app.get("/home", include_in_schema=True)
+async def home_redirect():
+    """Redirect to the API documentation."""
+    return RedirectResponse(url="/docs")
 
 @dataclass
 class RoomInfo:
@@ -458,6 +502,41 @@ async def set_target_temperature(room_id: str, temperature: float):
         "room_name": room.info.name,
         "new_temperature": temperature,
         "old_temperature": old_temp
+    }
+
+@app.get("/room/{room_id}/temperature")
+async def get_room_temperature(room_id: str):
+    """API endpoint for temperature sensors to report their readings."""
+    if room_id not in rooms:
+        raise HTTPException(status_code=404, detail="Room not found")
+    
+    # Simulate temperature reading (in a real system, this would be from actual sensors)
+    # Using this endpoint for testing and development
+    current_temp = rooms[room_id].current_temp
+    if current_temp is None:
+        current_temp = rooms[room_id].target_temp + random.uniform(-2.0, 2.0)
+        current_temp = round(current_temp, 1)
+    
+    return {
+        "room_id": room_id,
+        "temperature": current_temp,
+        "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
+    }
+
+@app.post("/room/{room_id}/heater")
+async def control_room_heater(room_id: str, data: dict):
+    """API endpoint for controlling heaters."""
+    if room_id not in rooms:
+        raise HTTPException(status_code=404, detail="Room not found")
+    
+    # In a real system, this would control actual heater hardware
+    # Using this endpoint for testing and development
+    status = data.get("status", False)
+    return {
+        "room_id": room_id,
+        "status": status,
+        "success": True,
+        "message": f"Heater {'activated' if status else 'deactivated'}"
     }
 
 if __name__ == "__main__":

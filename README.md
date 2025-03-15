@@ -1,29 +1,44 @@
 # Home Temperature Control System
 
-A FastAPI-based application for managing home temperature control and topology. The system provides real-time temperature monitoring, automated heater control, and a modern web interface for easy configuration and management.
+## Overview
+This project provides a system for monitoring and controlling home temperature settings with security features to ensure only authorized users can make changes.
 
-## Features
+## Documentation
 
-- Real-time temperature monitoring and automated heater control
-- House topology management (add/edit/delete rooms)
-- Modern web UI for configuration
-- Secure control API endpoints with PIN protection
-- Configurable temperature thresholds and check intervals
-- Detailed logging system with file rotation
-- Temperature checks in seconds (configurable)
-- REST API with Swagger/ReDoc documentation
+### System Components
+* [Security Utilities Documentation](./security_documentation.md) - Details about the security features, token generation and validation
 
-## Installation
+## Getting Started
 
-1. Create a virtual environment and activate it:
-```bash
-python -m venv venv
-source venv/bin/activate  # On Windows use: venv\Scripts\activate
-```
+### Prerequisites
+- Python 3.6+
+- Required Python packages (see `requirements.txt`)
 
-2. Install dependencies:
-```bash
-pip install -r requirements.txt
+### Installation
+
+1. Clone the repository
+2. Create a virtual environment and activate it:
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # On Windows use: venv\Scripts\activate
+   ```
+
+3. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. Configure your environment variables including security settings
+
+### Basic Usage
+```python
+from security_utils import SecurityUtils
+
+# Initialize security with a PIN
+security = SecurityUtils(control_pin="your_secure_pin")
+
+# Generate authentication tokens for secure operations
+token = security.generate_token()
 ```
 
 ## Running the Application
@@ -238,3 +253,14 @@ Response:
     "message": "Target temperature for living_room set to 22.0°C"
 }
 ```
+
+## Security Best Practices
+- Never hardcode security PINs in your application code
+- Regularly rotate security credentials
+- Use HTTPS for all communication involving security tokens
+
+## Contributing
+Contributions are welcome! Please read the contributing guidelines before submitting pull requests.
+
+## License
+[Insert appropriate license information here]

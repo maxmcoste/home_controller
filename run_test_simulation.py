@@ -63,6 +63,9 @@ def wait_for_api(max_attempts=10):
     return False
 
 def main():
+    # Create logs directory if it doesn't exist
+    os.makedirs('logs', exist_ok=True)
+    
     # Start the main application
     logger.info("Starting Home Temperature Control System...")
     controller = run_command("python home_topology_api.py")

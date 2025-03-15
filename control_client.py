@@ -14,7 +14,7 @@ def main():
     
     # Generate security token
     security = SecurityUtils(args.pin)
-    timestamp = str(time.time())
+    timestamp = str(int(time.time()))
     token = security.generate_token(timestamp)
     
     # Make request

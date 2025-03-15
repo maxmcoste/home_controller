@@ -2,7 +2,7 @@ import hashlib
 import hmac
 import time
 import logging
-from typing import Optional
+from typing import Optional, Tuple
 
 logger = logging.getLogger('home_temperature_control')
 
@@ -48,14 +48,20 @@ class SecurityUtils:
             logger.error(f"Error validating token: {str(e)}")
             return False
     
-    def generate_token(self):
+    def generate_token(self, timestamp: str = None) -> str:
         """
-        Generate a token for testing purposes.
-        Returns token and timestamp.
+        Generate a security token for the given timestamp or current time.
+        
+        Args:
+            timestamp: Optional timestamp string, if None current time is used
+            
+        Returns:
+            Generated token string
         """
         if not self.control_pin:
-            return None, None
+            return None
             
-        timestamp = str(int(time.time()))
-        token = hashlib.sha256(f"{timestamp}{self.control_pin}".encode()).hexdigest()
-        return token, timestamp
+        if timestamp is None:
+            timestamp = str(int(time.time()))
+            
+        return hashlib.sha256(f"{timestamp}{self.control_pin}".encode()).hexdigest()
